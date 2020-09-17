@@ -1,89 +1,206 @@
 import numpy as np 
+from enum import Enum
 
+
+class GameResult(Enum):
+    NOT_FINISHED = 0
+    NOUGHT_WIN = -1
+    CROSS_WIN = 1
+    DRAW = 3
+
+
+BOARDDIM = 3
+BOARDSIZE = BOARDDIM * BOARDDIM
+
+EMPTY = 0
+CROSS = 1
+NOUGHT = -1
 
 class Board:
 
-    def __init__(self):
-        self.rows = 3
-        self.columns = 3
-        self.state = np.zeros((self.rows, self.columns), dtype=int8)
+    def __init__(self, p1, p2):
+        self.state = np.zeros((BOARDDIM, BOARDDIM))
+        self.board_hash = None
+        self.is_game_over = False
+        self.p1 = p1
+        self.p2 = p2 
+        self.cur_player_symbol = CROSS
 
-    def get_state(self):
-        return self.state
+    def get_board_hash(self):
+        self.board_hash = str(self.state.reshape(BOARDSIZE))
+        return self.board_hash
 
-    def get_position(self, x, y):
-        return self.state[x,y]
+    def available_positions(self):
+        positions = []
+        for i in range(BOARDDIM):
+            for j in range(BOARDDIM):
+                if self.state[i, j] == EMPTY:
+                    positions.append((i, j))
+        return positions
 
-    def set_position(self, x, y, val):
-        self.state[x,y] = val
+    def check_winner(self):
+        # check rows
+        for i in range(BOARDDIM):
+            if sum(self.state[i, :]) == CROSS*3:
+                self.is_game_over = True
+                return GameResult.CROSS_WIN
+            elif sum(self.state[i, :]) == NOUGHT*3:
+                self.is_game_over = True
+                return GameResult.NOUGHT_WIN
+        
+        # check columns
+        for i in range(BOARDDIM):
+            if sum(self.state[:, i]) == CROSS*3:
+                self.is_game_over = True
+                return GameResult.CROSS_WIN
+            elif sum(self.state[:, i]) == NOUGHT*3:
+                self.is_game_over = True
+                return GameResult.NOUGHT_WIN
 
-    def get_available_moves(self):
-        return np.argwhere(self.state == 0)
+        #diagonal
+        forward_diagonal_sum = sum([self.state[i, i] for i in range(BOARDDIM)])
+        backward_diagonal_sum = sum([self.state[i, BOARDDIM-(1+i)] for i in range(BOARDDIM)])
+        if forward_diagonal_sum == CROSS*3 or backward_diagonal_sum == CROSS*3:
+            self.is_game_over = True
+            return GameResult.CROSS_WIN
+        if forward_diagonal_sum == NOUGHT*3 or backward_diagonal_sum == NOUGHT*3:
+            self.is_game_over = True
+            return GameResult.NOUGHT_WIN
 
-    def check_row_win(self, symbol):
-        count = 0
-        win = False
-        for i in range(3):
-            count = 0
-            for j in range(3):
-                if self.state[i, j] == symbol:
-                    count += 1
-            if count == 3:
-                win == True
-                break
-        return win
+        if self.num_empty_positions() == 0:
+            self.is_game_over = True
+            return GameResult.DRAW
 
-    def check_column_win(self, symbol):
-        count = 0
-        win = False
-        for i in range(3):
-            count = 0
-            for j in range(3):
-                if self.state[j, i] == symbol:
-                    count += 1
-            if count == 3:
-                win == True
-                break
-        return win
+        self.is_game_over
+        return None
+    
 
-    def check_forward_diagonal_win(self, symbol):
-        count = 0
-        win = False
-        for i in range(3):
-            if self.state[i, i] == symbol:
-                count += 1
-        if count == 3:
-            win = True
-        return win
+    def num_empty_positions(self):
+        return np.count_nonzero(self.state == EMPTY)
+    
+    # def is_legal_move(self, pos):
+    #     return (0 <= pos <= BOARDSIZE) and self.state[pos] == EMPTY
 
-    def check_backward_diagonal_win(self, symbol):
-        count = 0
-        win = False
-        idx1 = 0
-        idx2 = 2
-        for i in range(3):
-            if self.state[idx1, idx2] == symbol:
-                count += 1
-            idx1 += 1
-            idx2 -= 1
-        if count == 3:
-            win = True
-        return win
+    def play_move(self, pos):
+        if self.state[pos] != EMPTY:
+            print("Illegal Move: Position Occupied")
+        self.state[pos] = self.cur_player_symbol
+        self.cur_player_symbol = CROSS if self.cur_player_symbol == NOUGHT else NOUGHT
 
-    def is_game_won(self):
-        symbols = [1, -1]
+    def give_reward(self):
+        result = self.check_winner()
+        if result == GameResult.CROSS_WIN:
+            self.p1.feed_reward(1)
+            self.p2.feed_reward(0)
+        elif result == GameResult.NOUGHT_WIN:
+            self.p2.feed_reward(1)
+            self.p1.feed_reward(0)
+        elif result == GameResult.DRAW:
+            self.p1.feed_reward(0.1)
+            self.p2.feed_reward(0.5)
 
-        for symbol in symbols:
-            if check_row_win(symbol) or check_column_win(symbol) or check_forward_diagonal_win(symbol) or check_backward_diagonal_win(symbol):
-                return symbol
-
-        return 0
-
-    def is_game_ended(self):
-        return len(self.get_available_moves()) == 0
 
     def reset_state(self):
-        self.state = np.zeros((self.rows, self.columns), dtype=int8)
+        self.state = np.zeros((BOARDDIM, BOARDDIM))
+        self.board_hash = None
+        self.is_game_over = False
+        self.cur_player_symbol = CROSS
+
+    def print_board(self):
+        # p1: x  p2: o
+        for i in range(0, BOARDDIM):
+            print('-------------')
+            out = '| '
+            for j in range(0, BOARDDIM):
+                if self.state[i, j] == 1:
+                    token = 'x'
+                if self.state[i, j] == -1:
+                    token = 'o'
+                if self.state[i, j] == 0:
+                    token = ' '
+                out += token + ' | '
+            print(out)
+        print('-------------')
+
+    def simulation(self, iterations=100):
+        for i in range(iterations):
+            if i%1000 == 0:
+                print("Rounds {}".format(i))
+            while not self.is_game_over:
+                positions = self.available_positions()
+                p1_action = self.p1.choose_action(positions, self.state, self.cur_player_symbol)
+                self.play_move(p1_action)
+                board_hash = self.get_board_hash()
+                self.p1.add_move(board_hash)
+
+                winner = self.check_winner()
+                if winner is not None:
+                    self.give_reward()
+                    self.p1.reset()
+                    self.p2.reset()
+                    self.reset_state()
+                    break
+                else:
+                    positions = self.available_positions()
+                    p2_action = self.p2.choose_action(positions, self.state, self.cur_player_symbol)
+                    self.play_move(p2_action)
+                    board_hash = self.get_board_hash()
+                    self.p2.add_move(board_hash)
+
+                    winner = self.check_winner()
+                    if winner is not None:
+                        self.give_reward()
+                        self.p1.reset()
+                        self.p2.reset()
+                        self.reset_state()
+                        break
+    
+    def play2(self):
+        while not self.is_game_over:
+            # Player 1
+            positions = self.available_positions()
+            p1_action = self.p1.choose_action(positions, self.state, self.cur_player_symbol)
+            # take action and upate board state
+            self.play_move(p1_action)
+            self.print_board()
+            # check board status if it is end
+            win = self.check_winner()
+            if win is not None:
+                if win == GameResult.CROSS_WIN:
+                    print(self.p1.name, "wins!")
+                else:
+                    print("tie!")
+                self.reset_state()
+                break
+
+            else:
+                # Player 2
+                positions = self.available_positions()
+                p2_action = self.p2.chooseAction(positions)
+
+                self.play_move(p2_action)
+                self.print_board()
+                win = self.check_winner()
+                if win is not None:
+                    if win == -1:
+                        print(self.p2.name, "wins!")
+                    else:
+                        print("tie!")
+                    self.reset_state()
+                    break
+
+        
+
+    
+
+
+    
+    
+    
+
+
+
+
 
             
 
