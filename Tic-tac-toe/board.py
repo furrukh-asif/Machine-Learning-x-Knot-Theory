@@ -71,7 +71,6 @@ class Board:
             self.is_game_over = True
             return GameResult.DRAW
 
-        self.is_game_over
         return None
     
 
