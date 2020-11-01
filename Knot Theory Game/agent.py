@@ -2,6 +2,7 @@ import numpy as np
 import pickle
 import timeit
 from random import randint
+from copy import deepcopy
 
 EMPTY = 0
 UNCHANGED = 1
@@ -10,7 +11,7 @@ CHANGED = 2
 
 class Agent:
 
-    def __init__(self, name, alpha=0.2, gamma=0.95, q_init=0.6):
+    def __init__(self, name, alpha=0.2, gamma=0.95, q_init=0.3):
         self.name = name
         self.move_history = []
         self.learning_rate = alpha
@@ -19,7 +20,7 @@ class Agent:
         self.q = {}
 
     def get_knot_hash(self, knot):
-        knot_hash = str(knot[1])
+        knot_hash = str(knot)
         return knot_hash
 
     def choose_action(self, available_moves, current_knot):
@@ -36,7 +37,7 @@ class Agent:
             for crossing_idx in available_moves:
                 change_knot = False
                 for i in range(2):
-                    new_state = current_knot[1].copy()
+                    new_state = deepcopy(current_knot[1])
                     if change_knot:
                         new_state[crossing_idx] = CHANGED
                     else:
@@ -64,8 +65,8 @@ class Agent:
     def reset(self):
         self.move_history = []
         
-    def savePolicy(self):
-        fw = open('policy_' + str(self.name), 'wb')
+    def savePolicy(self, knot_name):
+        fw = open('./Policies/policy_' + str(knot_name) + "_" + str(self.name), 'wb')
         pickle.dump(self.q, fw)
         fw.close()
 

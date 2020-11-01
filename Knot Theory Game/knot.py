@@ -149,36 +149,40 @@ class Knot:
                         self.reset(pd_code)
                         break
 
-    def play2(self):
+    def play(self):
         while not self.is_game_over:
-            print("knot: ", self.knot)
+            # print("knot: ", self.knot)
             # Player 1
             positions = self.available_moves()
             p1_action = self.p1.choose_action(positions, self.knot)
             # take action and upate board state
             self.play_move(p1_action)
-            print(self.p1.name + ": ", p1_action)
+            # print(self.p1.name + ": ", p1_action)
             # check board status if it is end
             win = self.check_winner()
             if win is not None:
-                print("knot: ", self.knot)
+                # print("knot: ", self.knot)
                 if win == GameResult.UNKNOTTER_WIN:
-                    print(self.p1.name, "wins!")
+                    # print(self.p1.name, "wins!")
+                    return self.p1.name
                 elif win == GameResult.KNOTTER_WIN:
-                    print(self.p2.name, "wins!")
+                    # print(self.p2.name, "wins!")
+                    return self.p2.name
                 break
             else:
-                print("knot: ", self.knot)
+                # print("knot: ", self.knot)
                 # Player 2
                 positions1 = self.available_moves()
                 p2_action = self.p2.choose_action(positions1, self.knot)
                 self.play_move(p2_action)
-                print(self.p2.name + ": ", p2_action)
-                win = self.check_winner()
+                # print(self.p2.name + ": ", p2_action)
+                win = self.check_winner() 
                 if win is not None:
-                    print("knot: ", self.knot)
+                    # print("knot: ", self.knot)
                     if win == GameResult.KNOTTER_WIN:
-                        print(self.p2.name, "wins!")
+                        # print(self.p2.name, "wins!")
+                        return self.p2.name
                     elif win == GameResult.UNKNOTTER_WIN:
-                        print(self.p1.name, "wins!")
+                        # print(self.p1.name, "wins!")
+                        return self.p1.name
                     break
