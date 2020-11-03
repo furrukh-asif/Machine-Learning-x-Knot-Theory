@@ -175,7 +175,4 @@ Knotter,Random,Random,0.547
 Random,Knotter,Knotter,0.569
 Unknotter,Random,Unknotter,1.0
 Random,Unknotter,Unknotter,0.571
-8_12:
-Knotter,Unknotter,Unknotter
-Unknotter,Knotter,Unknotter
-Knotter,Random,Random,0.619
+
