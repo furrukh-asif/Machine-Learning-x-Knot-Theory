@@ -83,7 +83,7 @@ def play_knot(knot_name, pd_code):
 # trefoil = [[1, 4, 2, 5], [3, 6, 4, 1], [5, 2, 6, 3]]
 # play_knot("trefoil", trefoil)
 
-with open('knotinfo.csv') as csvfile:
+with open('knotinfo(8-12).csv') as csvfile:
     readCSV = csv.reader(csvfile,  delimiter=',')
     next(readCSV)
     for row in readCSV:
